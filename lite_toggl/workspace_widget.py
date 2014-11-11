@@ -40,6 +40,7 @@ class TimeEntryMonitor(QtGui.QLCDNumber):
         super(TimeEntryMonitor, self).__init__(parent)
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self._tick)
+        self.timeEntry = None
 
     def setTimeEntry(self, timeEntry):
         self.timeEntry = timeEntry

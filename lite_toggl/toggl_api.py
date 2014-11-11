@@ -24,7 +24,7 @@ def workspaces():
 class TogglProject(object):
     def __init__(self, data, workspace):
         self.workspace = workspace
-        self.id = data["id"]
+        self.togglId = data["id"]
         self.name = data["name"]
 
     def startTimeEntry(self, description):
@@ -32,7 +32,7 @@ class TogglProject(object):
                            json.dumps({
                                "time_entry": {
                                    "description": description,
-                                   "pid": self.id,
+                                   "pid": self.togglId,
                                    "created_with": "lite-toggl"
                                }
                            }),
@@ -41,11 +41,11 @@ class TogglProject(object):
 
 class TogglWorkspace(object):
     def __init__(self, data):
-        self.id = data["id"]
+        self.togglId = data["id"]
         self.name = data["name"]
 
     def projects(self):
-        resp = _apiRequest("workspaces/%s/projects" % (self.id))
+        resp = _apiRequest("workspaces/%s/projects" % (self.togglId))
         if resp == None:
             return []
         return [TogglProject(project, self) for project in resp]
@@ -53,9 +53,10 @@ class TogglWorkspace(object):
 class TogglTimeEntry(object):
     def __init__(self, data, project):
         self.project = project
-        self.id = data["id"]
-        self.start = datetime.datetime.strptime(data["start"], "%Y-%m-%dT%H:%M:%SZ")
+        self.togglId = data["id"]
+        self.start = datetime.datetime.strptime(data["start"],
+                                                "%Y-%m-%dT%H:%M:%SZ")
 
     def stop(self):
-        return _apiRequest("time_entries/%s/stop" % (self.id),
+        return _apiRequest("time_entries/%s/stop" % (self.togglId),
                            requestType="put")

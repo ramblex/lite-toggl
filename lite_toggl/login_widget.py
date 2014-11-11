@@ -1,4 +1,4 @@
-import toggl_api
+from lite_toggl import toggl_api
 import requests
 from PySide import QtGui, QtCore
 

@@ -1,8 +1,7 @@
-import sys
 from PySide import QtGui
 
-from login_widget import LoginWidget
-from workspace_widget import WorkspaceWidget
+from lite_toggl.login_widget import LoginWidget
+from lite_toggl.workspace_widget import WorkspaceWidget
 
 class ApplicationWidget(QtGui.QWidget):
     def __init__(self, parent, workspaces):
