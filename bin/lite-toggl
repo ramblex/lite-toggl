@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+from os import sys, path
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
+import signal
+import logging
+from lite_toggl.app_widget import MainWindow
+from PySide import QtGui
+
+# Allow CTRL-C
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+logging.basicConfig(level=logging.DEBUG)
+app = QtGui.QApplication(sys.argv)
+MainWindow()
+sys.exit(app.exec_())
