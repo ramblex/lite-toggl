@@ -3,19 +3,28 @@ import json
 import datetime
 
 TOGGL_URL = "https://www.toggl.com/api/v8"
-AUTH = ('', '')
+
+class TogglAuth(object):
+    def __init__(self):
+        self.email = None
+        self.password = None
+
+    def setCredentials(self, email, password):
+        self.email = email
+        self.password = password
+
+    def getCredentials(self):
+        return (self.email, self.password)
+
+AUTH = TogglAuth()
+
+def getAuth():
+    return AUTH
 
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%SZ",
     "%Y-%m-%dT%H:%M:%S+00:00"
 ]
-
-def getEmail():
-    return AUTH[0]
-
-def setAuth(email, password):
-    global AUTH
-    AUTH = (email, password)
 
 def _parseDate(date):
     """Parse date string from Toggl
@@ -34,7 +43,7 @@ def _parseDate(date):
 
 def _apiRequest(path, data=None, requestType="get"):
     url = "%s/%s" % (TOGGL_URL, path)
-    resp = getattr(requests, requestType)(url, auth=AUTH, data=data)
+    resp = getattr(requests, requestType)(url, auth=AUTH.getCredentials(), data=data)
     resp.raise_for_status()
     return json.loads(resp.text)
 

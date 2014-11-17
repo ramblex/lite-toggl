@@ -16,7 +16,7 @@ class LoginWidget(QtGui.QWidget):
         layout.addWidget(self.message)
 
         layout.addWidget(QtGui.QLabel("Email:"))
-        self.email = QtGui.QLineEdit(toggl_api.getEmail())
+        self.email = QtGui.QLineEdit(toggl_api.getAuth().email)
         layout.addWidget(self.email)
 
         layout.addWidget(QtGui.QLabel("Password:"))
@@ -38,7 +38,7 @@ class LoginWidget(QtGui.QWidget):
 
         QtGui.qApp.processEvents()
 
-        toggl_api.setAuth(self.email.text(), self.password.text())
+        toggl_api.getAuth().setCredentials(self.email.text(), self.password.text())
         try:
             workspaces = toggl_api.workspaces()
             self.loggedIn.emit(workspaces)
