@@ -1,13 +1,14 @@
 from PySide import QtGui, QtCore
 import datetime
 import time
+from lite_toggl import toggl_api
 
 class WorkspaceWidget(QtGui.QWidget):
     def __init__(self, parent, workspace):
         super(WorkspaceWidget, self).__init__(parent)
         layout = QtGui.QVBoxLayout(self)
-        taskbar = TaskBar(self, workspace.projects())
-        layout.addWidget(taskbar)
+        self.taskbar = TaskBar(self, workspace.projects())
+        layout.addWidget(self.taskbar)
         self.setLayout(layout)
 
 class TimeEntryCreator(QtGui.QWidget):
@@ -57,7 +58,6 @@ class TimeEntryMonitor(QtGui.QLabel):
 class TaskBar(QtGui.QWidget):
     def __init__(self, parent, projects):
         super(TaskBar, self).__init__(parent)
-        self.currentTimeEntry = None
 
         projects.sort(key=lambda x: x.name)
         layout = QtGui.QHBoxLayout(self)
@@ -75,12 +75,14 @@ class TaskBar(QtGui.QWidget):
         self.taskControlButton.clicked.connect(self.start)
         layout.addWidget(self.taskControlButton)
 
+        # Show the currently running time entry if there is one
+        currentTimeEntry = toggl_api.currentTimeEntry()
+        if currentTimeEntry:
+            self._onTimeEntryStart(currentTimeEntry)
+
         self.setLayout(layout)
 
-    def start(self):
-        project = self.timeEntryCreator.selectedProject()
-        entry = project.startTimeEntry(self.timeEntryCreator.getDescription())
-
+    def _onTimeEntryStart(self, entry):
         self.timeEntryCreator.setEnabled(False)
 
         self.timeEntryMonitor.setTimeEntry(entry)
@@ -89,6 +91,11 @@ class TaskBar(QtGui.QWidget):
         self.taskControlButton.setText("Stop")
         self.taskControlButton.clicked.disconnect()
         self.taskControlButton.clicked.connect(self.stop)
+
+    def start(self):
+        project = self.timeEntryCreator.selectedProject()
+        entry = project.startTimeEntry(self.timeEntryCreator.getDescription())
+        self._onTimeEntryStart(entry)
 
     def stop(self):
         self.timeEntryMonitor.stop()
