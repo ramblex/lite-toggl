@@ -35,7 +35,7 @@ class TimeEntryCreator(QtGui.QWidget):
     def selectedProject(self):
         return self.projects[self.projectChooser.currentIndex()]
 
-class TimeEntryMonitor(QtGui.QLCDNumber):
+class TimeEntryMonitor(QtGui.QLabel):
     def __init__(self, parent):
         super(TimeEntryMonitor, self).__init__(parent)
         self.timer = QtCore.QTimer(self)
@@ -52,7 +52,7 @@ class TimeEntryMonitor(QtGui.QLCDNumber):
 
     def _tick(self):
         duration = datetime.datetime.now() - self.timeEntry.start
-        self.display(time.strftime("%H:%M:%S", time.gmtime(duration.seconds)))
+        self.setText(time.strftime("%H:%M:%S", time.gmtime(duration.seconds)))
 
 class TaskBar(QtGui.QWidget):
     def __init__(self, parent, projects):
