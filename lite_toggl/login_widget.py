@@ -1,49 +1,46 @@
 from lite_toggl import toggl_api
 import requests
-from PySide import QtGui, QtCore
+from Tkinter import Button, Label, Entry, Frame, BOTH, LEFT, StringVar, NORMAL, DISABLED
 
-class LoginWidget(QtGui.QWidget):
-
-    loggedIn = QtCore.Signal(list)
+class LoginWidget(Frame):
 
     def __init__(self, parent):
-        super(LoginWidget, self).__init__(parent)
-        self.parent = parent
+        Frame.__init__(self, parent)
+        self.loggedIn = None
 
-        layout = QtGui.QVBoxLayout()
+        self.pack(fill=BOTH, expand=1)
 
-        self.message = QtGui.QLabel("")
-        layout.addWidget(self.message)
+        self.message = Label(self, text="")
+        self.message.pack()
 
-        layout.addWidget(QtGui.QLabel("Email:"))
-        self.email = QtGui.QLineEdit(toggl_api.getAuth().email)
-        layout.addWidget(self.email)
+        l = Label(self, text="Email:")
+        l.pack()
 
-        layout.addWidget(QtGui.QLabel("Password:"))
-        self.password = QtGui.QLineEdit()
-        self.password.setEchoMode(QtGui.QLineEdit.Password)
-        layout.addWidget(self.password)
+        self.email = StringVar()
+        self.email.set(toggl_api.getAuth().email)
 
-        self.submit = QtGui.QPushButton("Login")
-        self.submit.clicked.connect(self.login)
-        layout.addWidget(self.submit)
+        e = Entry(self, textvariable=self.email, text="")
+        e.pack()
 
-        self.password.returnPressed.connect(self.submit.clicked)
+        l = Label(self, text="Password:")
+        l.pack()
 
-        self.setLayout(layout)
+        self.password = StringVar()
+        e = Entry(self, show="*", textvariable=self.password, text="")
+        e.pack()
+
+        self.submit = Button(self, text="Login", command=self.login)
+        self.submit.pack()
+
+    def onLoggedIn(self, cb):
+        self.loggedIn = cb
 
     def login(self):
-        self.submit.setText("Logging in...")
-        self.submit.setEnabled(False)
-
-        QtGui.qApp.processEvents()
-
-        toggl_api.getAuth().setCredentials(self.email.text(), self.password.text())
+        toggl_api.getAuth().setCredentials(self.email.get(), self.password.get())
         try:
             workspaces = toggl_api.workspaces()
-            self.loggedIn.emit(workspaces)
+            if self.onLoggedIn != None:
+                self.loggedIn(workspaces)
         except requests.exceptions.HTTPError:
-            self.message.setText("Invalid credentials")
-            self.submit.setEnabled(True)
-            self.submit.setText("Login")
+            self.message["text"] = "Invalid credentials"
 

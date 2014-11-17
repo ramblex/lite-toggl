@@ -1,37 +1,31 @@
-from PySide import QtGui
+from Tkinter import BOTH
+from ttk import Notebook
 
 from lite_toggl.login_widget import LoginWidget
 from lite_toggl.workspace_widget import WorkspaceWidget
 from lite_toggl.idle_tracker import IdleChecker
 
-class ApplicationWidget(QtGui.QWidget):
+class ApplicationWidget(Notebook):
     def __init__(self, parent, workspaces):
-        super(ApplicationWidget, self).__init__(parent)
+        Notebook.__init__(self, parent)
 
-        tabs = QtGui.QTabWidget(self)
+        self.pack(fill=BOTH, expand=1)
+
         for workspace in workspaces:
             widget = WorkspaceWidget(self, workspace)
-            tabs.addTab(widget, workspace.name)
-
-        layout = QtGui.QVBoxLayout(self)
-        layout.addWidget(tabs)
+            self.add(widget, text=workspace.name)
 
         checkIdleThread = IdleChecker(workspaces)
         checkIdleThread.start()
 
-        self.setLayout(layout)
-
-class MainWindow(QtGui.QMainWindow):
-    def __init__(self):
+class MainWindow(object):
+    def __init__(self, root):
         super(MainWindow, self).__init__()
-        self.loginWidget = LoginWidget(self)
-        self.loginWidget.loggedIn.connect(self.onLogin)
-
-        self.setCentralWidget(self.loginWidget)
-        self.setWindowTitle("Toggl")
-        self.show()
+        self.root = root
+        self.loginWidget = LoginWidget(root)
+        self.loginWidget.onLoggedIn(self.onLogin)
 
     def onLogin(self, workspaces):
-        appWidget = ApplicationWidget(self, workspaces)
-        self.setCentralWidget(appWidget)
-        self.resize(600, 50)
+        self.loginWidget.pack_forget()
+        self.loginWidget.destroy()
+        ApplicationWidget(self.root, workspaces)
