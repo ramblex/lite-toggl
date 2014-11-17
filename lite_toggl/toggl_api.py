@@ -8,7 +8,7 @@ AUTH = ('', '')
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%SZ",
     "%Y-%m-%dT%H:%M:%S+00:00"
-        ]
+]
 
 def getEmail():
     return AUTH[0]
@@ -23,9 +23,9 @@ def _parseDate(date):
     Toggl haven't used the same date format in all of their messages so this
     function attempts to cope with that.
     """
-    for date_format in DATE_FORMATS:
+    for dateFormat in DATE_FORMATS:
         try:
-            date = datetime.datetime.strptime(date, date_format)
+            date = datetime.datetime.strptime(date, dateFormat)
             return date
         except ValueError:
             pass

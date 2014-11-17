@@ -8,12 +8,12 @@ IDLE_TIMEOUT = 5 * 60 # Seconds
 
 class XScreenSaverInfo(ctypes.Structure):
     """ typedef struct { ... } XScreenSaverInfo; """
-    _fields_ = [('window',      ctypes.c_ulong), # screen saver window
-                ('state',       ctypes.c_int),   # off,on,disabled
-                ('kind',        ctypes.c_int),   # blanked,internal,external
-                ('since',       ctypes.c_ulong), # milliseconds
-                ('idle',        ctypes.c_ulong), # milliseconds
-                ('event_mask',  ctypes.c_ulong)] # events
+    _fields_ = [('window', ctypes.c_ulong), # screen saver window
+                ('state', ctypes.c_int),   # off,on,disabled
+                ('kind', ctypes.c_int),   # blanked,internal,external
+                ('since', ctypes.c_ulong), # milliseconds
+                ('idle', ctypes.c_ulong), # milliseconds
+                ('event_mask', ctypes.c_ulong)] # events
 
 class IdleChecker(threading.Thread):
     """Monitors whether the user is idle"""
