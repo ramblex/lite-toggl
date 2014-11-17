@@ -5,6 +5,11 @@ import datetime
 TOGGL_URL = "https://www.toggl.com/api/v8"
 AUTH = ('', '')
 
+DATE_FORMATS = [
+    "%Y-%m-%dT%H:%M:%SZ",
+    "%Y-%m-%dT%H:%M:%S+00:00"
+        ]
+
 def getEmail():
     return AUTH[0]
 
@@ -12,11 +17,33 @@ def setAuth(email, password):
     global AUTH
     AUTH = (email, password)
 
+def _parseDate(date):
+    """Parse date string from Toggl
+
+    Toggl haven't used the same date format in all of their messages so this
+    function attempts to cope with that.
+    """
+    for date_format in DATE_FORMATS:
+        try:
+            date = datetime.datetime.strptime(date, date_format)
+            return date
+        except ValueError:
+            pass
+
+    return None
+
 def _apiRequest(path, data=None, requestType="get"):
     url = "%s/%s" % (TOGGL_URL, path)
     resp = getattr(requests, requestType)(url, auth=AUTH, data=data)
     resp.raise_for_status()
     return json.loads(resp.text)
+
+def currentTimeEntry():
+    resp = _apiRequest("time_entries/current")
+    if resp["data"] == None:
+        return None
+    else:
+        return TogglTimeEntry(resp["data"], None)
 
 def workspaces():
     return [TogglWorkspace(w) for w in _apiRequest("workspaces")]
@@ -54,8 +81,7 @@ class TogglTimeEntry(object):
     def __init__(self, data, project):
         self.project = project
         self.togglId = data["id"]
-        self.start = datetime.datetime.strptime(data["start"],
-                                                "%Y-%m-%dT%H:%M:%SZ")
+        self.start = _parseDate(data["start"])
 
     def stop(self):
         return _apiRequest("time_entries/%s/stop" % (self.togglId),

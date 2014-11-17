@@ -2,6 +2,7 @@ from PySide import QtGui
 
 from lite_toggl.login_widget import LoginWidget
 from lite_toggl.workspace_widget import WorkspaceWidget
+from lite_toggl.idle_tracker import IdleChecker
 
 class ApplicationWidget(QtGui.QWidget):
     def __init__(self, parent, workspaces):
@@ -14,6 +15,9 @@ class ApplicationWidget(QtGui.QWidget):
 
         layout = QtGui.QVBoxLayout(self)
         layout.addWidget(tabs)
+
+        checkIdleThread = IdleChecker(workspaces)
+        checkIdleThread.start()
 
         self.setLayout(layout)
 
