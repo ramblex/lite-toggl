@@ -23,6 +23,7 @@ def getAuth():
 
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%SZ",
+    # FIXME: This will break if times are not UTC!
     "%Y-%m-%dT%H:%M:%S+00:00"
 ]
 
