@@ -6,7 +6,7 @@ PySide.
 
 Dependencies:
 * Python 2.7
-* PySide
+* keyring `sudo pip install keyring`
 
 PyLint
 ------
