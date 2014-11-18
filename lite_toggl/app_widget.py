@@ -7,16 +7,16 @@ from lite_toggl.idle_tracker import IdleChecker
 from lite_toggl.app_config import AppConfig
 
 class ApplicationWidget(Notebook):
-    def __init__(self, parent, workspaces):
+    def __init__(self, parent, user):
         Notebook.__init__(self, parent)
 
         self.pack(fill=BOTH, expand=1)
 
-        for workspace in workspaces:
+        for wid, workspace in user.workspaces.iteritems():
             widget = WorkspaceWidget(self, workspace)
             self.add(widget, text=workspace.name)
 
-        checkIdleThread = IdleChecker(workspaces)
+        checkIdleThread = IdleChecker(user)
         checkIdleThread.start()
 
 class MainWindow(object):
@@ -30,7 +30,7 @@ class MainWindow(object):
         self.loginWidget = LoginWidget(root, self.config)
         self.loginWidget.onLoggedIn(self.onLogin)
 
-    def onLogin(self, workspaces):
+    def onLogin(self, user):
         self.loginWidget.pack_forget()
         self.loginWidget.destroy()
-        ApplicationWidget(self.root, workspaces)
+        ApplicationWidget(self.root, user)

@@ -18,9 +18,9 @@ class XScreenSaverInfo(ctypes.Structure):
 class IdleChecker(threading.Thread):
     """Monitors whether the user is idle"""
 
-    def __init__(self, workspaces):
+    def __init__(self, user):
         super(IdleChecker, self).__init__()
-        self.workspaces = workspaces
+        self.user = user
         self.daemon = True
 
         self.xlib = ctypes.cdll.LoadLibrary('libX11.so.6')
@@ -39,6 +39,6 @@ class IdleChecker(threading.Thread):
     def run(self):
         while True:
             idleTime = self.getIdleTime() / 1000
-            if idleTime >= IDLE_TIMEOUT and toggl_api.currentTimeEntry():
+            if idleTime >= IDLE_TIMEOUT and self.user.currentTimeEntry():
                 print "Why you no work?"
             time.sleep(IDLE_TIMEOUT)

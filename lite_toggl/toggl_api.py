@@ -4,22 +4,43 @@ import datetime
 
 TOGGL_URL = "https://www.toggl.com/api/v8"
 
-class TogglAuth(object):
-    def __init__(self):
-        self.email = None
-        self.password = None
+class TogglUser(object):
+    def __init__(self, email, password):
+        self._auth = (email, password)
+        self.workspaces = {}
 
-    def setCredentials(self, email, password):
-        self.email = email
-        self.password = password
+    def currentTimeEntry():
+        resp = self.apiRequest("time_entries/current")
+        if resp["data"] == None:
+            return None
+        else:
+            return TogglTimeEntry(resp["data"], None)
 
-    def getCredentials(self):
-        return (self.email, self.password)
+    def fetchData(self):
+        """Fetch user data from Toggl and put it into a hierarchicial
+        structure"""
 
-AUTH = TogglAuth()
+        resp = self.apiRequest("me?with_related_data=true")
+        for workspace in resp["data"]["workspaces"]:
+            self.workspaces[workspace["id"]] = TogglWorkspace(workspace, self)
 
-def getAuth():
-    return AUTH
+        for data in resp["data"]["clients"]:
+            workspace = self.workspaces[data["wid"]]
+            workspace.addClient(data)
+
+        for data in resp["data"]["projects"]:
+            workspace = self.workspaces[data["wid"]]
+            workspace.addProject(data)
+
+        for data in resp["data"]["time_entries"]:
+            workspace = self.workspaces[data["wid"]]
+            workspace.addTimeEntry(data)
+
+    def apiRequest(self, path, data=None, requestType="get"):
+        url = "%s/%s" % (TOGGL_URL, path)
+        resp = getattr(requests, requestType)(url, auth=self._auth, data=data)
+        resp.raise_for_status()
+        return json.loads(resp.text)
 
 DATE_FORMATS = [
     "%Y-%m-%dT%H:%M:%SZ",
@@ -42,57 +63,95 @@ def _parseDate(date):
 
     return None
 
-def _apiRequest(path, data=None, requestType="get"):
-    url = "%s/%s" % (TOGGL_URL, path)
-    resp = getattr(requests, requestType)(url, auth=AUTH.getCredentials(), data=data)
-    resp.raise_for_status()
-    return json.loads(resp.text)
-
-def currentTimeEntry():
-    resp = _apiRequest("time_entries/current")
-    if resp["data"] == None:
-        return None
-    else:
-        return TogglTimeEntry(resp["data"], None)
-
-def workspaces():
-    return [TogglWorkspace(w) for w in _apiRequest("workspaces")]
-
 class TogglProject(object):
-    def __init__(self, data, workspace):
+    def __init__(self, data, workspace, user):
+        self._user = user
         self.workspace = workspace
         self.togglId = data["id"]
         self.name = data["name"]
+        self._timeEntries = {}
+
+    def timeEntries(self):
+        return self._timeEntries
+
+    def addTimeEntry(self, data):
+        self._timeEntries[data["id"]] = TogglTimeEntry(data, self, self._user)
 
     def startTimeEntry(self, description):
-        resp = _apiRequest("time_entries/start",
-                           json.dumps({
-                               "time_entry": {
-                                   "description": description,
-                                   "pid": self.togglId,
-                                   "created_with": "lite-toggl"
-                               }
-                           }),
-                           requestType="post")
+        resp = self._user.apiRequest("time_entries/start",
+                                     json.dumps({
+                                         "time_entry": {
+                                             "description": description,
+                                             "pid": self.togglId,
+                                             "created_with": "lite-toggl"
+                                         }
+                                     }),
+                                     requestType="post")
         return TogglTimeEntry(resp["data"], self)
 
+class TogglClient(object):
+    def __init__(self, data, workspace, user):
+        self._user = user
+        self.workspace = workspace
+        self.togglId = data["id"]
+        self.name = data["name"]
+        self._projects = {}
+
+    def addProject(self, project):
+        self._projects[project.togglId] = project
+
 class TogglWorkspace(object):
-    def __init__(self, data):
+    def __init__(self, data, user):
+        self._user = user
+        self._projects = {}
+        self._clients = {
+            "noclient": TogglClient({"id": None, "name": None}, self, self._user)
+        }
         self.togglId = data["id"]
         self.name = data["name"]
 
+    def addTimeEntry(self, data):
+        project = self._projects[data["pid"]]
+        project.addTimeEntry(data)
+
+    def addClient(self, data):
+        self._clients[data["id"]] = TogglClient(data, self, self._user)
+
+    def addProject(self, data):
+        if "cid" in data:
+            client = self._clients[data["cid"]]
+        else:
+            client = self._clients["noclient"]
+
+        project = TogglProject(data, self, self._user)
+        self._projects[data["id"]] = project
+        client.addProject(project)
+
+    def clients(self):
+        return self._clients
+
     def projects(self):
-        resp = _apiRequest("workspaces/%s/projects" % (self.togglId))
-        if resp == None:
-            return []
-        return [TogglProject(project, self) for project in resp]
+        return self._projects
+
+    def timeEntries(self):
+        entries = {}
+        for project in self.projects().values():
+            entries.update(project.timeEntries())
+        return entries
 
 class TogglTimeEntry(object):
-    def __init__(self, data, project):
+    def __init__(self, data, project, user):
+        self._user = user
         self.project = project
         self.togglId = data["id"]
         self.start = _parseDate(data["start"])
+        self.stop = _parseDate(data["stop"])
+        self.duration = data["duration"]
+        if "description" in data:
+            self.description = data["description"]
+        else:
+            self.description = None
 
     def stop(self):
-        return _apiRequest("time_entries/%s/stop" % (self.togglId),
+        return self._user.apiRequest("time_entries/%s/stop" % (self.togglId),
                            requestType="put")
