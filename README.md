@@ -2,7 +2,7 @@ Lite Toggl
 ==========
 
 A lightweight desktop application for Toggl (http://www.toggl.com) built using
-PySide.
+Python.
 
 Dependencies:
 * Python 2.7
