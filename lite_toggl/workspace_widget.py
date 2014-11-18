@@ -6,8 +6,10 @@ class WorkspaceWidget(Frame):
     def __init__(self, parent, workspace):
         Frame.__init__(self, parent)
 
-        self.timeEntry = TimeEntryWidget(self, workspace.clients(), workspace.projects())
-        self.timeEntry.pack(expand=True)
-
         self.timeEntryList = TimeEntryListWidget(self, workspace.timeEntries())
+        self.timeEntry = TimeEntryWidget(self, workspace.projects(),
+                                         onCreation=self.timeEntryList.insertTimeEntry)
+
+        self.timeEntry.pack(expand=True, pady=10)
         self.timeEntryList.pack(expand=True)
+

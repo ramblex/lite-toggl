@@ -28,6 +28,7 @@ class TimeEntryListWidget(Treeview):
             stop = ""
         self.insert('', 'end', text=text,
                     values=(e.project.name, e.data["start"], stop, duration))
+        self.sort_column("start", True)
 
     def sort_column(self, col, reverse):
         l = [(self.set(k, col), k) for k in self.get_children('')]
