@@ -103,7 +103,9 @@ class TogglClient(object):
 class TogglWorkspace(object):
     def __init__(self, data, user):
         self._user = user
-        self._projects = {}
+        self._projects = {
+            "noproject": TogglProject({"id": None, "name": None}, self, self._user)
+        }
         self._clients = {
             "noclient": TogglClient({"id": None, "name": None}, self, self._user)
         }
@@ -111,7 +113,11 @@ class TogglWorkspace(object):
         self.name = data["name"]
 
     def addTimeEntry(self, data):
-        project = self._projects[data["pid"]]
+        if "pid" in data:
+            project = self._projects[data["pid"]]
+        else:
+            project = self._projects["noproject"]
+
         project.addTimeEntry(data)
 
     def addClient(self, data):
