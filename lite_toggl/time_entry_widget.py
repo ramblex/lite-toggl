@@ -10,6 +10,10 @@ class TimeEntryWidget(Frame):
     def __init__(self, parent, clients, projects):
         Frame.__init__(self, parent)
 
+        self.time = StringVar()
+        self.time.set("00:00:00")
+        self.timeEntry = None
+
         self.projects = projects.values()
         self.projects.sort(key=lambda x: x.name)
 
@@ -37,7 +41,7 @@ class TimeEntryWidget(Frame):
         self.projectChooser = Combobox(self, values=values)
         self.projectChooser.grid(row=1, column=2)
 
-        self.timeEntryClock = TimeEntryClock(self)
+        self.timeEntryClock = Label(self, textvariable=self.time)
         self.timeEntryClock.grid(row=1, column=3)
 
         self.submitText = StringVar()
@@ -45,42 +49,26 @@ class TimeEntryWidget(Frame):
         self.submit = Button(self, textvariable=self.submitText, command=self.start)
         self.submit.grid(row=1, column=4)
 
+    def selectedProject(self):
+        return self.projects[self.projectChooser.current()]
+
     def start(self):
         self.submitText.set("Stop")
         self.submit["command"] = self.stop
         project = self.selectedProject()
-        entry = project.startTimeEntry(self.description.get())
-        self.timeEntryClock.setTimeEntry(entry)
+        self.timeEntry = project.startTimeEntry(self.description.get())
+        self._tick()
 
     def stop(self):
         self.submitText.set("Start")
         self.submit["command"] = self.start
-        self.timeEntryClock.stop()
-
-    def selectedProject(self):
-        return self.projects[self.projectChooser.current()]
-
-class TimeEntryClock(Frame):
-    def __init__(self, parent):
-        Frame.__init__(self, parent)
-
-        self.time = "00:00:00"
-        l = Label(self, textvariable=self.time)
-        l.pack()
-        self.timeEntry = None
-        self.job = None
-
-    def setTimeEntry(self, timeEntry):
-        self.timeEntry = timeEntry
-        self._tick()
-        self.job = self.after(1000, self._tick)
-
-    def stop(self):
-        self.time = ""
         self.timeEntry.stop()
-        self.after_cancel(self.job)
+        self.timeEntry = None
 
     def _tick(self):
-        print "TICK"
-        duration = datetime.datetime.now() - self.timeEntry.start
-        self.time = time.strftime("%H:%M:%S", time.gmtime(duration.seconds))
+        if self.timeEntry:
+            duration = datetime.datetime.now() - self.timeEntry.data["start"]
+            self.time.set(time.strftime("%H:%M:%S", time.gmtime(duration.seconds)))
+            self.after(1000, self._tick)
+        else:
+            self.time.set("00:00:00")

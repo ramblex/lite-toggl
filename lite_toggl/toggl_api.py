@@ -87,7 +87,7 @@ class TogglProject(object):
                                          }
                                      }),
                                      requestType="post")
-        return TogglTimeEntry(resp["data"], self)
+        return TogglTimeEntry(resp["data"], self, self._user)
 
 class TogglClient(object):
     def __init__(self, data, workspace, user):
@@ -143,15 +143,9 @@ class TogglTimeEntry(object):
     def __init__(self, data, project, user):
         self._user = user
         self.project = project
-        self.togglId = data["id"]
-        self.start = _parseDate(data["start"])
-        self.stop = _parseDate(data["stop"])
-        self.duration = data["duration"]
-        if "description" in data:
-            self.description = data["description"]
-        else:
-            self.description = None
+        self.data = data
+        self.data["start"] = _parseDate(self.data["start"])
 
     def stop(self):
-        return self._user.apiRequest("time_entries/%s/stop" % (self.togglId),
+        return self._user.apiRequest("time_entries/%s/stop" % (self.data["id"]),
                            requestType="put")
