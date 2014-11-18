@@ -7,6 +7,7 @@ Python.
 Dependencies:
 * Python 2.7
 * keyring `sudo pip install keyring`
+* requests `sudo pip install requests`
 
 PyLint
 ------
